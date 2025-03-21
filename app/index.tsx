@@ -8,6 +8,7 @@ import {
   TextInput,
   ImageBackground,
   Animated,
+  Image,
 } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
@@ -16,21 +17,28 @@ export default function Index() {
     key: "dc764666f1bd7d701e63ecd7a7950769",
     base: "https://api.openweathermap.org/data/2.5/",
   };
+
   const [query, setQuery] = useState("");
   interface WeatherData {
-    name?: string;
-    sys?: {
+    city?: {
+      name?: string;
       country?: string;
     };
-    main?: {
-      temp?: number;
-    };
+
+    list?: {
+      main: {
+        temp: number;
+      };
+    }[];
+
     weather?: {
       description?: string;
       icon?: string;
       main?: string;
     }[];
   }
+
+  const data = [1, 2, 3, 4, 5];
 
   const [weather, setWeather] = useState<WeatherData>({});
   const search = () => {
@@ -40,7 +48,7 @@ export default function Index() {
       return; // Exit function early
     }
     // Fetch weather data from OpenWeather API using user-entered query
-    fetch(`${api.base}weather?q=${query}&units=imperial&APPID=${api.key}`)
+    fetch(`${api.base}forecast?q=${query}&units=imperial&APPID=${api.key}`)
       .then((res) => res.json()) //Convert response to JSON
       .then((result) => {
         console.log("Weather API response:", result); // Log API response
@@ -48,6 +56,12 @@ export default function Index() {
         setQuery(""); // Clear input field after search
       })
       .catch((error) => console.error("Error fetching weather:", error)); // Log any errors
+  };
+
+  const daysOfTheWeek = (dates: any) => {
+    let daysOfWeek = ["Sun", "Mon", "Tues", "Wed", "Thurs", "Fri", "Sat"];
+    let dayz = daysOfWeek[dates.getDay()];
+    return { dayz };
   };
 
   const dateBuilder = (d: any) => {
@@ -83,10 +97,9 @@ export default function Index() {
   const [isFocused, setIsFocused] = useState(false);
 
   const backgroundImage =
-    weather.main?.temp && weather.main.temp > 70
+    weather.list && weather.list[0] && weather.list[0].main.temp > 70
       ? require("../assets/images/warmImage.jpg")
       : require("../assets/images/coldImage.jpg");
-
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.container}>
@@ -105,19 +118,47 @@ export default function Index() {
             returnKeyType="done"
             onSubmitEditing={search}
           />
-          {typeof weather.main != "undefined" ? (
+          {weather.city ? (
             <View>
               <View style={styles.locationContainer}>
                 <Text style={styles.location}>
-                  {weather.name}, {weather.sys?.country}
+                  {weather.city?.name}, {weather.city?.country}
                 </Text>
                 <Text style={styles.date}>{dateBuilder(new Date())}</Text>
               </View>
               <View style={styles.weatherContainer}>
                 <Text style={styles.temp}>
-                  {Math.round(weather.main.temp ?? 0)}°f
+                  {weather.list &&
+                    weather.list[0] &&
+                    Math.round(weather.list[0].main.temp)}
+                  °f
                 </Text>
-                <Text style={styles.weather}>{weather.weather?.[0]?.main}</Text>
+                <Text style={styles.weather}>{weather.weather?.[0].main}</Text>
+              </View>
+              <Text style={styles.forecastText}>5 Day Forecast</Text>
+              <View style={styles.HorizonalLine} />
+              <View style={styles.forecastContainer}>
+                {data.map((_, index) => {
+                  let futureDate = new Date();
+                  futureDate.setDate(futureDate.getDate() + index); // Increment by index
+
+                  return (
+                    <View key={index}>
+                      <Text style={styles.forecastDayText}>
+                        {daysOfTheWeek(futureDate).dayz}
+                      </Text>
+                      <Image
+                        source={{
+                          uri: "https://openweathermap.org/img/wn/01d@2x.png",
+                        }}
+                        style={styles.forecastImage}
+                      />
+                      <Text style={styles.forecastTempText}>
+                        {Math.round(weather.list?.[index]?.main.temp ?? 0)}°f
+                      </Text>
+                    </View>
+                  );
+                })}
               </View>
             </View>
           ) : (
@@ -207,6 +248,48 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 30,
     fontWeight: "bold",
+    textShadowColor: "rgba(0, 0, 0, 0.75)",
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 10,
+  },
+  HorizonalLine: {
+    borderBottomColor: "white",
+    borderBottomWidth: 1,
+    width: "90%",
+    alignSelf: "center",
+  },
+  forecastContainer: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginTop: 20,
+  },
+  forecastText: {
+    color: "white",
+    fontSize: 25,
+    fontWeight: "bold",
+    textAlign: "center",
+    textShadowColor: "rgba(0, 0, 0, 0.75)",
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 10,
+  },
+  forecastDayText: {
+    color: "white",
+    fontSize: 20,
+
+    textShadowColor: "rgba(0, 0, 0, 0.75)",
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 10,
+  },
+
+  forecastImage: {
+    width: 50,
+    height: 50,
+  },
+  forecastTempText: {
+    color: "white",
+    fontSize: 20,
+
     textShadowColor: "rgba(0, 0, 0, 0.75)",
     textShadowOffset: { width: -1, height: 1 },
     textShadowRadius: 10,
