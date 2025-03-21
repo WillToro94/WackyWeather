@@ -11,10 +11,11 @@ import {
   Image,
 } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import "react-native-dotenv";
 
 export default function Index() {
   const api = {
-    key: "dc764666f1bd7d701e63ecd7a7950769",
+    key: process.env.API_KEY,
     base: "https://api.openweathermap.org/data/2.5/",
   };
 
